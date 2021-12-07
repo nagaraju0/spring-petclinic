@@ -2,7 +2,7 @@ node('jdk11-mvn3.8.4') {
     properties([pipelineTriggers([upstream('testfile'), cron('30 */2 * * 0,6')])])
     parameters([choice(choices: ['petscriped', 'petdeclarative', 'master'], description: 'this is for build to run', name: 'BUILD_TO_RUN')
     stage('git') {
-        git branch: 'main', url: 'https://github.com/nagaraju0/spring-petclinic.git',branch : "${params.BUILD_TO_RUN}"
+        git branch: 'main', url: 'https://github.com/nagaraju0/spring-petclinic.git'
     }
     stage('build') {
         sh '''
