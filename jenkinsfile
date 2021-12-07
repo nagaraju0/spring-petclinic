@@ -1,18 +1,43 @@
-node('jdk11-mvn3.8.4') {
-    stage('git') {
-        git branch: 'main', url: 'https://github.com/nagaraju0/spring-petclinic.git'
+pipeline{
+    agent { label 'jdk11-mvn3.8.4' }
+    triggers {
+        upstream(upstreamProjects: 'petfree', threshold: hudson.model.Result.SUCCESS)
+        cron('*/30 4 * * 1-5') 
+        pollSCM('30 */2 * * 0,6')
     }
-    stage('build') {
-        sh '''
-             echo "PATH=${PATH}"
-             echo "M2_HOME=${M2_HOME}"
-        '''
-        sh '/usr/local/apache-maven-3.8.4/bin/mvn clean package'     
+    parameters {
+        choice(name: 'BRANCH_TO_BUILD', choices: ['petscripted', 'petdeclarative', 'master'], description: 'for build')
+        string(name: 'MAVEN_GOAL', defaultValue: 'package', description: 'for goal')
     }
-    stage('archive') {
-        archiveArtifacts artifacts: 'target/*.jar', followSymlinks: false
-    }
-    stage('publish test reports') {
-        junit '**/TEST-*.xml'
+    stages {
+        stage('scm') {
+            steps {
+               git branch: 'main', url: 'https://github.com/nagaraju0/spring-petclinic.git' 
+            }
+        }
+        stage('build') {
+            steps {
+              sh '/usr/local/apache-maven-3.8.4/bin/mvn clean package'
+            }
+        }
+        stage('archive') {
+            steps {
+              archiveArtifacts artifacts: 'target/*.jar', followSymlinks: false
+            }
+        }
+        stage('publish test results') {
+            steps {
+              archiveArtifacts artifacts: 'target/*.jar', followSymlinks: false  
+            }
+        }
     }
 }
+
+
+
+
+
+
+
+
+
