@@ -1,13 +1,15 @@
 node('jdk11-mvn3.8.4') {
+    properties([pipelineTriggers([upstream('testfile'), cron('30 */2 * * 0,6')])])
+    parameters([choice(choices: ['petscriped', 'petdeclarative', 'master'], description: 'this is for build to run', name: 'BUILD_TO_RUN'), string(defaultValue: 'package', description: 'this is for run to package', name: 'MAVEN_GOAL', trim: true)])])
     stage('git') {
-        git branch: 'main', url: 'https://github.com/nagaraju0/spring-petclinic.git'
+        git branch: 'main', url: 'https://github.com/nagaraju0/spring-petclinic.git',branch : "${params.BUILD_TO_RUN}"
     }
     stage('build') {
         sh '''
              echo "PATH=${PATH}"
              echo "M2_HOME=${M2_HOME}"
         '''
-        sh '/usr/local/apache-maven-3.8.4/bin/mvn clean package'     
+        sh "/usr/local/apache-maven-3.8.4/bin/mvn ${params.MAVEN_GOAL}"     
     }
     stage('archive') {
         archiveArtifacts artifacts: 'target/*.jar', followSymlinks: false
