@@ -27,7 +27,7 @@ pipeline{
         }
         stage('publish test results') {
             steps {
-              archiveArtifacts artifacts: 'target/*.jar', followSymlinks: false  
+               junit '**/TEST-*.xml'  
             }
         }
     }
