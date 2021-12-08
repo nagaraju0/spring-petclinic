@@ -12,7 +12,7 @@ pipeline{
     stages {
         stage('scm') {
             steps {
-               git branch: 'main', url: 'https://github.com/nagaraju0/spring-petclinic.git' 
+                git branch: 'main', url: 'https://github.com/nagaraju0/spring-petclinic.git' 
             }
         }
         stage('build') {
@@ -31,22 +31,46 @@ pipeline{
             }
         }
     }
-         post {
+        pipeline{
+    agent { label 'jdk11-mvn3.8.4' }
+    triggers {
+        upstream(upstreamProjects: 'petfree', threshold: hudson.model.Result.SUCCESS)
+        cron('*/30 4 * * 1-5') 
+        pollSCM('30 */2 * * 0,6')
+    }
+    parameters {
+        choice(name: 'BRANCH_TO_BUILD', choices: ['petscripted', 'petdeclarative', 'master'], description: 'for build')
+        string(name: 'MAVEN_GOAL', defaultValue: 'package', description: 'for goal')
+    }
+    stages {
+        stage('scm') {
+            steps {
+                git branch: 'main', url: 'https://github.com/nagaraju0/spring-petclinic.git' 
+            }
+        }
+        stage('build') {
+            steps {
+              sh '/usr/local/apache-maven-3.8.4/bin/mvn clean package'
+            }
+        }
+        stage('archive') {
+            steps {
+              archiveArtifacts artifacts: 'target/*.jar', followSymlinks: false
+            }
+        }
+        stage('publish test results') {
+            steps {
+               junit '**/TEST-*.xml'  
+            }
+        }
+    }
+        post {
             always {
                 mail from: "nagarajucivil011@gmail.com",
                 to: 'abbaigarimanavadu77@gmail.com',
                 subject: "Status of the pipeline ${currentBuild.fullDisplayName}",
                 body: "${env.BUILD_URL} has a result ${currentBuild.result}"
-
+        
         }
     }
 }
-
-
-
-
-
-
-
-
-
