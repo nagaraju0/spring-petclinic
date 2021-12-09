@@ -1,11 +1,20 @@
 node('jdk11-mvn3.8.4') {
-    stage('git') {
-        git branch: 'main', url: 'https://github.com/nagaraju0/spring-petclinic.git'
+    try {
+        stage('git') {
+            git branch: 'main', url: 'https://github.com/nagaraju0/spring-petclinic.git'
+        }
+        stage('build') {
+            sh '/usr/local/apache-maven-3.8.4/bin/mvn clean package'
+        }
+        currentbuild.results='SUCCESS'
     }
-    stage('build') {
-        sh '/usr/local/apache-maven-3.8.4/bin/mvn clean package'
+    catch (err) {
+        currentbuild.results='FAILURE'
     }
-    stage('email') {
-        mail bcc: '', body: '${env.BUILD_URL} has a result ${currentbuild.results}', cc: '', from: '', replyTo: '', subject: 'status of the pipeline : ${currentbuild.fulldisplayname}', to: 'nagarajucivil011@gmail.com'
+    finally {
+        mail to: 'nagarajucivil011@gmail.com',
+        subject: 'status of the pipeline : ${currentbuild.fulldisplayname}',
+        body: '${env.BUILD_URL} has a result ${currentbuild.results}'
     }
 }
+   
