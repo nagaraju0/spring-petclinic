@@ -1,20 +1,28 @@
 node('jdk11-mvn3.8.4') {
     try {
+        properties([pipelineTriggers([upstream('testfile'), cron('30 */2 * * 0,6'), pollSCM('15 */1 * * 1-5')])])
+        properties([parameters([choice(choices: ['main', 'petdeclarative', 'petscripted'], description: 'to build', name: 'BUILD_TO_RUN')])])
         stage('git') {
             git branch: 'main', url: 'https://github.com/nagaraju0/spring-petclinic.git'
         }
         stage('build') {
             sh '/usr/local/apache-maven-3.8.4/bin/mvn clean package'
         }
-        currentbuild.result='SUCCESS'
+        stage('archive') {
+            archiveArtifacts artifacts: 'target/*.jar', followSymlinks: false
+        }
+        stage('publish test results') {
+            junit '**/TEST-*.xml'
+        }
+        currentBuild.result='SUCCESS'
     }
     catch (err) {
-        currentbuild.result='FAILURE'
+        currentBuild.result='FAILURE'
     }
     finally {
         mail to: 'nagarajucivil011@gmail.com',
-        subject: "status of the pipeline : ${currentbuild.fulldisplayname}",
-        body: "${env.BUILD_URL} has a result ${currentbuild.result}"
+        subject: "Status of the pipeline ${currentBuild.fullDisplayName}",
+        body: "${env.BUILD_URL} has a result ${currentBuild.result}"
     }
+  
 }
-   
