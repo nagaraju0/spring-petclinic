@@ -6,6 +6,6 @@ node('jdk11-mvn3.8.4') {
         sh '/usr/local/apache-maven-3.8.4/bin/mvn clean package'
     }
     stage('email') {
-        mail bcc: '', body: 'please accept', cc: '', from: '', replyTo: '', subject: 'jenkins job', to: 'nagarajucivil011@gmail.com'
+        mail bcc: '', body: '${env.BUILD_URL} has a result ${currentbuild.results}', cc: '', from: '', replyTo: '', subject: 'status of the pipeline : ${currentbuild.fulldisplayname}', to: 'nagarajucivil011@gmail.com'
     }
 }
