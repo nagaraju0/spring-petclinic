@@ -33,10 +33,10 @@ pipeline {
     }
     post {
         always {
-            mail from: "abbaigarimanavadu77@gmail.com",
-            to: 'nagarajucivil011@gmail.com',
-            subject: "Status of the pipeline ${currentBuild.fullDiplayName}",
-            body: "${env.BUILD_URL} has a result ${currentBuild.result}"
+            mail from: "abbaigarimanavadu@gmail.com",
+                to: 'nagarajucivil@gmail.com',
+                subject: "Status of the pipeline ${currentBuild.fullDisplayName}",
+                body: "${env.BUILD_URL} has a result ${currentBuild.result}"
         }
     }
 }
