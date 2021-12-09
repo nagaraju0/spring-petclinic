@@ -25,18 +25,16 @@ pipeline {
                 archiveArtifacts artifacts: 'target/*.jar', followSymlinks: false
             }
         }
-        stage('publish test result') {
-            steps {
-                junit '**/TEST-*.xml' 
-            }
+        stage('publish test reports') {
+            junit '**/TEST-*.xml'
         }
     }
     post {
         always {
             mail from: "abbaigarimanavadu77@gmail.com",
-                to: 'nagarajucivil011@gmail.com',
-                subject: "Status of the pipeline ${currentBuild.fullDiplayName}",
-                body: "${env.BUILD_URL} has a result ${currentBuild.result}"
+            to: 'nagarajucivil011@gmail.com',
+            subject: "Status of the pipeline ${currentBuild.fullDiplayName}",
+            body: "${env.BUILD_URL} has a result ${currentBuild.result}"
         }
     }
 }
