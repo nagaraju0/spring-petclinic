@@ -6,15 +6,15 @@ node('jdk11-mvn3.8.4') {
         stage('build') {
             sh '/usr/local/apache-maven-3.8.4/bin/mvn clean package'
         }
-        currentbuild.results='SUCCESS'
+        currentbuild.result='SUCCESS'
     }
     catch (err) {
-        currentbuild.results='FAILURE'
+        currentbuild.result='FAILURE'
     }
     finally {
         mail to: 'nagarajucivil011@gmail.com',
-        subject: 'status of the pipeline : ${currentbuild.fulldisplayname}',
-        body: '${env.BUILD_URL} has a result ${currentbuild.results}'
+        subject: "status of the pipeline : ${currentbuild.fulldisplayname}",
+        body: "${env.BUILD_URL} has a result ${currentbuild.results}"
     }
 }
    
