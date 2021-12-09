@@ -42,8 +42,8 @@ pipeline{
                     body: """<p> executed: job<b>\'${env.JOB_NAME}:{env.BUILD_NUMBER}\'
                     </b></p><p>view console outpe at "<a href="${env.BUILD_URL}${env.JOB_NAME}:${env.BUILD_NUMBER}
                     </a>"</p> <p><i> Build log is attached </i> </p> """,
-                    compresslog:true,
-                    replayTo:"abbaigarimanavadu77@gmail.com",
+                    compressLog: true,
+                    replyTo:"abbaigarimanavadu77@gmail.com",
                     to:"nagarajucivil011@gmail.com",
                     subject: "${env.JOB_NAME}-build${env.BUILD_NUMBER}-status${current build.result}"
             }
