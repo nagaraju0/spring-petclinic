@@ -35,9 +35,10 @@ pipeline {
         }
         stage("build & SonarQube analysis") {
             steps {
-                withSonarQubeEnv(installationName:'SONAR_9.2.1')
-                sh "mvn clean package
-                sonar:sonar"
+                withSonarQubeEnv(installationName:'SONAR_9.2.1') {
+                    sh "mvn clean package
+                    sonar:sonar"
+                }
             }
         }
         stage("Quality Gate") {
