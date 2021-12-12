@@ -44,7 +44,6 @@ pipeline {
             steps {
                 timeout(time: 1, unit: 'HOURS') {
                     //parameters indicates whether to set pipeline to 
-                    UNSTABLE if QualityGate fails
                     //true=setpipeline to UNSTABLE,false=don't
                     wait for QualityGate abortpipeline:true
                 }
