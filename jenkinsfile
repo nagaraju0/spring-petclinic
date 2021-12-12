@@ -6,7 +6,7 @@ pipeline {
         pollSCM('30 23 * * 0,6')
     }
      parameters {
-         choice(name: 'BRANCH_TO_BUILD', choices: ['petdeclarative', 'petscripted', 'main'], description: 'to build')
+         choice(name: 'BRANCH_TO_BUILD', choices: ['petdeclarative', 'frog', 'main'], description: 'to build')
          string(name: 'MAVEN_GOAL', defaultValue: 'clean package', description: 'for run')
     }
     tools {
