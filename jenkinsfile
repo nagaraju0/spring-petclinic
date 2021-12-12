@@ -1,23 +1,26 @@
 pipeline {
     agent { label 'jdk11-mvn3.8.4' }
     triggers {
-        upstream(upstreamProjects: 'testfile', threshold: hudson.model.Result.SUCCESS)
-        cron('30 */4 * * 1-5')
-        pollSCM('45 */1 * * 0,6')
+        upstream(upstreamProjects: 'freedemo', threshold: hudson.model.Result.SUCCESS)
+        cron('*/30 2 * * 1-5')
+        pollSCM('30 23 * * 0,6')
     }
-    parameters {
-        string(name: 'MAVEN_GOAL', defaultValue: 'clean package', description: 'for goal')
-        choice(name: 'BUILD_TO_RUN', choices: ['main', 'petscripted', 'petdeclarated'], description: 'to build')
+     parameters {
+         choice(name: 'BRANCH_TO_BUILD', choices: ['petdeclarative', 'petscripted', 'main'], description: 'to build')
+         string(name: 'MAVEN_GOAL', defaultValue: 'clean package', description: 'for run')
+    }
+    tolls {
+        maven 'MVN_3.8.4'
     }
     stages {
-        stage('scm') {
+        stage('get code') {
             steps {
-                git branch: 'main', url: 'https://github.com/nagaraju0/spring-petclinic.git'
+                git branch: 'main', url: 'https://github.com/spring-projects/spring-petclinic.git'
             }
         }
         stage('build') {
             steps {
-                sh '/usr/local/apache-maven-3.8.4/bin/mvn clean package'
+                sh ''mvn clean package
             }
         }
         stage('archive') {
@@ -25,25 +28,34 @@ pipeline {
                 archiveArtifacts artifacts: 'target/*.jar', followSymlinks: false
             }
         }
-        stage('publish test reports') {
-            steps{
-                junit '**/TEST-*.xml'
+        stage('publish test results') {
+            steps {
+                junit '**TEST-*.xml'
             }
         }
         stage("build & SonarQube analysis") {
             steps {
-                withSonarQubeEnv(installationName:'SONAR_9.2.1',envOnly: true , credentialsId: 'SONAR_TOKEN') {
-                    sh "/usr/local/apache-maven-3.8.4/bin/mvn clean package sonar:sonar"
-                                        echo "${env.SONAR_HOST_URL}"
+                withSonarQubeEnv(installationName:'SONAR_9.2.1')
+                sh ''mvn clean package
+                sonar:sonar
+            }
+        }
+        stage("Quality Gate") {
+            steps {
+                timeout(time: 1, unit: 'HOURS') {
+                    //parameters indicates whether to set pipeline to 
+                    UNSTABLE if QualityGate fails
+                    //true=setpipeline to UNSTABLE,false=don't
+                    wait for QualityGate abortpipeline:true
                 }
             }
-        }    
+        }
     }
     post {
         always {
-            mail from:"abbaigarimanavadu77@gmail.com",
-                to:'nagarajucivil011@gmail.com',
-                subject:"status of the pipeline : ${currentBuild.fullDisplayName}",
+            mail from: "abbaigarimanavadu77@gmail.com",
+                to: "nagarajucivil011@gmail.com",
+                subject: "status of the pipeline : ${currentBuild.fullDisplayName}",
                 body: "${env.BUILD_URL} has the result ${currentBuild.result}"
         }
     }
