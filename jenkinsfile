@@ -23,14 +23,15 @@ pipeline {
                 sh 'mvn clean package'
             }
         }
-        stage('archive') {
-            steps {
-                archiveArtifacts artifacts: 'target/*.jar', followSymlinks: false
+        stage ('archival') {
+            steps{
+            // archiving artifacts
+            archive 'target/*.jar'
             }
         }
         stage('publish test results') {
             steps {
-                junit '**TEST-*.xml'
+                junit 'target/surefire-reports/*.xml'
             }
         }
         stage("build & SonarQube analysis") {
