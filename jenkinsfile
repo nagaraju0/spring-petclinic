@@ -36,7 +36,7 @@ pipeline {
         stage("build & SonarQube analysis") {
             steps {
                 withSonarQubeEnv(installationName:'SONAR_9.2.1') {
-                    sh "mvn clean package
+                    sh "mvn clean package 
                     sonar:sonar"
                 }
             }
