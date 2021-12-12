@@ -20,7 +20,7 @@ pipeline {
         }
         stage('build') {
             steps {
-                sh '/usr/local/apache-maven-3.8.4/bin/mvn clean package'
+                sh 'mvn clean package'
             }
         }
         stage('archive') {
@@ -36,8 +36,8 @@ pipeline {
         stage("build & SonarQube analysis") {
             steps {
                 withSonarQubeEnv(installationName:'SONAR_9.2.1')
-                sh ''mvn clean package
-                sonar:sonar
+                sh "mvn clean package
+                sonar:sonar"
             }
         }
         stage("Quality Gate") {
