@@ -44,16 +44,16 @@ pipeline {
         stage('Quality Gate') {
             steps {
                 timeout(time: 1, unit: 'HOURS') {
-                    //parameter indicates to whether to set pipeline to UNSTABLE if Quality Gate fails
-                    //true=setpipeline to UNSTABLE, false=don,t
-                    waitforQualityGate abortpipeline: true 
+                    // Parameter indicates whether to set pipeline to UNSTABLE if Quality Gate fails
+                    // true = set pipeline to UNSTABLE, false = don't
+                    waitForQualityGate abortPipeline: true
                 }
             }
         }
         stage('artifacory configuration') {
             steps {
-                rtmavendepolyer (
-                    id: "MAVEN_DEPOLYER",
+                rtMavenDeployer (
+                    id: "MAVEN_DEPLOYER",
                     serverId: 'JFROG-OSS',
                     releaseRepo: 'qt-maven-releases',
                     snapshotRepo: 'qt-maven-snapshots'
@@ -62,13 +62,14 @@ pipeline {
         }
         stage('Exec maven') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'JFROG_USER', usernameVariable: 'ARTIFACTORY_USERNAME', passwordVariable: 'ARTIFACTORY_PASSWORD')])
-                rtMavenRun (
-                    tool: 'MVN_3.8.4',
-                    pom: 'pom.xml',
-                    goals: 'clean install',
-                    deployerId: "MAVEN_DEPOLYER"
-                )
+                withCredentials([usernamePassword(credentialsId: 'JFROG_ARTIFACTORY', usernameVariable: 'ARTIFACTORY_USERNAME', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
+                    rtMavenRun (
+                        tool: 'MVN_3.8.4',
+                        pom: 'pom.xml',
+                        goals: 'clean install',
+                        deployerId: "MAVEN_DEPLOYER"
+                    )
+                }
             }
         }
         stage('publish Build Info') {
