@@ -66,7 +66,7 @@ pipeline {
                     tool: 'MVN_3.8.4',
                     pom: 'pom.xml',
                     goals: 'clean install',
-                    depolyerId: "MAVEN_DEPOLYER"
+                    deployerId: "MAVEN_DEPOLYER"
                 )
             }
         }
