@@ -35,7 +35,7 @@ pipeline {
         }
         stage('build & SonarQube analysis') {
             steps {
-                withSonarQubeEnv(credentialsId'SONAR_9.2.1') {
+                withSonarQubeEnv(credentialsId:'SONAR_9.2.1') {
                     sh 'mvn clean package sonar:sonar'
                 }
             }
