@@ -1,21 +1,21 @@
 pipeline {
     agent { label 'jdk11-mvn3.8.4' }
     triggers {
-        upstream(upstreamProjects: 'freedemo', threshold: hudson.model.Result.SUCCESS)
-        cron('*/30 2 * * 1-5')
+        upstream(upstreamProjects: 'normal', threshold: hudson.model.Result.SUCCESS)
+        cron('30 */2 * * 1-5')
         pollSCM('30 23 * * 0,6')
     }
-     parameters {
-         choice(name: 'BRANCH_TO_BUILD', choices: ['petdeclarative', 'frog', 'main'], description: 'to build')
-         string(name: 'MAVEN_GOAL', defaultValue: 'clean package', description: 'for run')
+    parameters {
+        choice(name: 'BRANCH_TO_BUILD', choices: ['frog', 'petdeclarated', 'petdeclarative'], description: 'to build')
+        string(name: 'MAVEN_GOAL', defaultValue: 'clean package', description: 'for build')
     }
     tools {
         maven 'MVN_3.8.4'
     }
     stages {
-        stage('get code') {
+        stage('get clone code') {
             steps {
-                git branch: 'main', url: 'https://github.com/spring-projects/spring-petclinic.git'
+                git branch: 'main', url: 'https://github.com/nagaraju0/spring-petclinic.git'
             }
         }
         stage('build') {
@@ -23,40 +23,59 @@ pipeline {
                 sh 'mvn clean package'
             }
         }
-        stage ('archival') {
-            steps{
-            // archiving artifacts
-            archive 'target/*.jar'
+        stage('archive') {
+            steps {
+                archiveArtifacts artifacts: 'target/*.jar', followSymlinks: false
             }
         }
-        stage('publish test results') {
+        stage('publlish build result') {
             steps {
-                junit 'target/surefire-reports/*.xml'
+                junit '**TEST-*.xml'
             }
         }
-        stage("build & SonarQube analysis") {
+        stage('build & SonarQube analysis') {
             steps {
-                withSonarQubeEnv(installationName:'SONAR_9.2.1') {
+                withSonarQubeEnv(credentialsId'SONAR_9.2.1') {
                     sh 'mvn clean package sonar:sonar'
                 }
             }
         }
-        stage("Quality Gate") {
+        stage('Quality Gate') {
             steps {
                 timeout(time: 1, unit: 'HOURS') {
-                    // Parameter indicates whether to set pipeline to UNSTABLE if Quality Gate fails
-                    // true = set pipeline to UNSTABLE, false = don't
-                    waitForQualityGate abortPipeline: true
+                    //parameter indicates to whether to set pipeline to UNSTABLE if Quality Gate fails
+                    //true=setpipeline to UNSTABLE, false=don,t
+                    waitforQualityGate abortpipeline: true 
                 }
             }
         }
-    }
-    post {
-        always {
-            mail from: "abbaigarimanavadu77@gmail.com",
-                to: "nagarajucivil011@gmail.com",
-                subject: "status of the pipeline : ${currentBuild.fullDisplayName}",
-                body: "${env.BUILD_URL} has the result ${currentBuild.result}"
+        stage('artifacory configuration') {
+            steps {
+                rtmavendepolyer (
+                    id: "MAVEN_DEPOLYER",
+                    serverId: 'JFROG-OSS',
+                    releaseRepo: 'qt-maven-releases',
+                    snapshotRepo: 'qt-maven-snapshots'
+                )
+            }
+        }
+        stage('Exec maven') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'JFROG_USER', usernameVariable: 'ARTIFACTORY_USERNAME', passwordVariable: 'ARTIFACTORY_PASSWORD')])
+                rtMavenRun (
+                    tool: 'MVN_3.8.4',
+                    pom: 'pom.xml',
+                    goal: 'clean install',
+                    depolyerId: "MAVEN_DEPOLYER"
+                )
+            }
+        }
+        stage('publish Build Info') {
+            steps {
+                rtPublishBuildInfo (
+                    serverId: 'JFROG-OSS'
+                )
+            }
         }
     }
 }
