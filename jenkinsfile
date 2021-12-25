@@ -1,19 +1,19 @@
 pipeline {
     agent { label 'jdk11-mvn3.8.4' }
     triggers {
-        upstream(upstreamProjects: 'testfile', threshold: hudson.model.Result.SUCCESS)
-        cron('30 */2 * * 0,6')
-        pollSCM('30 23 * * 0,6')
+        upstream(upstreamProjects: 'krishna', threshold: hudson.model.Result.SUCCESS)
+        cron('30 */2 * * 1-5')
+        pollSCM('15 23 * * 1-5') 
     }
     parameters {
-        choice(name: 'BRANCH_TO_BUILD', choices: ['main', 'petdeclarative', 'petscripted'], description: 'To Build')
-        string(name: 'MAVEN_GOAL', defaultValue: 'package', description: 'For Run')
+        choice(name: 'BRANCH_TO_BUILD', choices: ['frog', 'main', 'dec@25'], description: 'To Build')
+        string(name: 'MAVEN_GOAL', defaultValue: 'clean package', description: 'For Run')
     }
     tools {
         maven 'MVN_3.8.4'
     }
     stages {
-        stage('Get Code') {
+        stage('Get Clone Code') {
             steps {
                 git branch: 'main', url: 'https://github.com/nagaraju0/spring-petclinic.git'
             }
@@ -25,23 +25,23 @@ pipeline {
         }
         stage('Archive') {
             steps {
-                // archive artifacts
-                archive 'target/*.xml'
+                // archiving artifacts
+                archive 'target/*.jar'
             }
         }
-        stage('Publish Build Result') {
+        stage('Publish Test Results') {
             steps {
                 junit '**/TEST-*.xml'
             }
         }
         stage("build & SonarQube analysis") {
             steps {
-                withSonarQubeEnv(installationName:'SONAR_9.2.1') {
+                withSonarQubeEnv('My SonarQube Server') {
                     sh 'mvn clean package sonar:sonar'
                 }
             }
         }
-        stage('Quality Gate') {
+        stage("Quality Gate") {
             steps {
                 timeout(time: 1, unit: 'HOURS') {
                     waitForQualityGate abortPipeline: true
@@ -55,15 +55,14 @@ pipeline {
                     serverId: 'JFROG-OSS',
                     releaseRepo: 'qt-maven-releases',
                     snapshotRepo: 'qt-maven-snapshots'
-
                 )
             }
         }
         stage ('Exec Maven') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'JFROG_ARTIFACTORY', usernameVariable: 'ARTIFACTORY_USERNAME', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
+                withCredentials([usernamePassword(credentialsId: 'JFROG_ARTIFACTROY', usernameVariable: 'ARTIFACTORY_USERNAME', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
                     rtMavenRun (
-                        tool: 'MNV_3.8.4',
+                        tool: 'MVN_3.8.4',
                         pom: 'pom.xml',
                         goals: 'clean install',
                         deployerId: 'MAVEN_DEPLOYER'
@@ -83,7 +82,7 @@ pipeline {
         always {
             mail from: "abbaigarimanavadu77@gmail.com",
                 to: "nagarajucivil011@gmail.com",
-                subject: "Status of the pipeline : ${currentBuild.fullDisplayName}",
+                subject: "status of the project : ${currentBuild.fullDisplayName}"
                 body: "${env.BUILD_URL} has the result ${currentBuild.result}"
         }
     }
