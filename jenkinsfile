@@ -15,7 +15,7 @@ pipeline{
     stages {
         stage('Get Clone Code') {
             steps {
-                git branch: 'main', url: 'https://github.com/spring-projects/spring-petclinic.git'
+                git branch: 'main', url: 'https://github.com/nagaraju0/spring-petclinic.git'
             }
         }
         stage('To Build') {
