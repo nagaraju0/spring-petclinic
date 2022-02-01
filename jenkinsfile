@@ -1,18 +1,52 @@
-node('jdk11-mvn3.8.4') {
-    stage('git') {
-        git branch: 'main', url: 'https://github.com/nagaraju0/spring-petclinic.git'
+pipeline {
+    agent { label 'jdk11-mvn3.8.4' }
+    triggers {
+        upstream(upstreamProjects: 'feb1', threshold: hudson.model.Result.SUCCESS)
+        cron('15 */4 * * 1-5')
+        pollSCM('45 23 * * 1-5')
     }
-    stage('build') {
-        sh '''
-             echo "PATH=${PATH}"
-             echo "M2_HOME=${M2_HOME}"
-        '''
-        sh '/usr/local/apache-maven-3.8.4/bin/mvn clean package'     
+    parameters {
+        choice(name: 'BRANCH_TO_BUILD', choices: ['test', 'main'], description: 'forbuild')
+        string(name: 'MAVEN_GOAL', defaultValue: 'clean package', description: 'forgoal')
     }
-    stage('archive') {
-        archiveArtifacts artifacts: 'target/*.jar', followSymlinks: false
+    tools {
+        maven 'mvn_3.8.4'
     }
-    stage('publish test reports') {
-        junit '**/TEST-*.xml'
+    stages {
+        stage('Get Clone Code') {
+            steps{
+                git 'https://github.com/nagaraju0/shopizer.git'
+            }
+        }
+        stage('To Build') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+        stage('Archive') {
+            steps{
+                // archiving artifacts
+                archive 'target/*.jar'
+            }
+        }
+        stage('Publish Test Result') {
+            steps {
+                junit '**/TEST-*.xml'
+            }
+        }
+        stage("build & SonarQube analysis") {
+            steps{
+                withSonarQubeEnv(installationName'SONAR_9.2.1') {
+                    sh 'mvn clean package sonar:sonar'
+                }
+            }
+        }
+        stage("Quality Gate") {
+            steps{
+                timeout(time: 1, unit: 'HOURS') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
     }
 }
