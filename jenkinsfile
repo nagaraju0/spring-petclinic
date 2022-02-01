@@ -1,13 +1,13 @@
-pipeline {
+pipeline{
     agent { label 'jdk11-mvn3.8.4' }
     triggers {
-        upstream(upstreamProjects: 'krishna', threshold: hudson.model.Result.SUCCESS)
-        cron('30 */2 * * 1-5')
-        pollSCM('15 23 * * 1-5') 
+        upstream(upstreamProjects: 'spc', threshold: hudson.model.Result.SUCCESS)
+        cron('30 */2 * * 0,6')
+        pollSCM('30 23 * * 0,6')  
     }
     parameters {
-        choice(name: 'BRANCH_TO_BUILD', choices: ['frog', 'main', 'dec@25'], description: 'To Build')
-        string(name: 'MAVEN_GOAL', defaultValue: 'clean package', description: 'For Run')
+        choice(name: 'BRANCH_BUILD', choices: ['dec@25', 'kesava', 'main'], description: 'Tobuild')
+        string(name: 'MAVEN_GOAL', defaultValue: 'clean package', description: 'forrun')
     }
     tools {
         maven 'MVN_3.8.4'
@@ -15,28 +15,29 @@ pipeline {
     stages {
         stage('Get Clone Code') {
             steps {
-                git branch: 'main', url: 'https://github.com/nagaraju0/spring-petclinic.git'
+                git branch: 'main', url: 'https://github.com/spring-projects/spring-petclinic.git'
             }
         }
-        stage('Build') {
+        stage('To Build') {
             steps {
                 sh 'mvn clean package'
             }
         }
         stage('Archive') {
             steps {
-                archiveArtifacts artifacts: 'target/*.jar', followSymlinks: false
+                //Archive Artifactory
+                archive 'target/*.jar'
             }
         }
-        stage('Publish Test Results') {
+        stage('Publish Test Rsults') {
             steps {
                 junit 'target/surefire-reports/*.xml'
             }
         }
-        stage("build & SonarQube analysis") {
+        stage('build & SonarQube analysis') {
             steps {
                 withSonarQubeEnv('My SonarQube Server') {
-                    sh 'mvn clean package sonar:sonar'
+                    sh 'maven clean package sonar:sonar'
                 }
             }
         }
@@ -50,23 +51,23 @@ pipeline {
         stage ('Artifactory configuration') {
             steps {
                 rtMavenDeployer (
-                    id: 'MAVEN_DEPLOYER',
-                    serverId: 'JFROG-OSS',
-                    releaseRepo: 'qt-maven-releases',
-                    snapshotRepo: 'qt-maven-snapshots'
+                    id: "MAVEN_DEPLOYER",
+                    serverId: "JFROG-OSS",
+                    releaserepo: "qt-maven-releases",
+                    snapshotrepo: "qt-maven-snapshots"
                 )
             }
         }
         stage ('Exec Maven') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'JFROG_ARTIFACTROY', usernameVariable: 'ARTIFACTORY_USERNAME', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
-                    rtMavenRun (
-                        tool: 'MVN_3.8.4',
-                        pom: 'pom.xml',
-                        goals: 'clean install',
-                        deployerId: 'MAVEN_DEPLOYER'
-                    )
-                }
+                 withCredentials([usernamePassword(credentialsId: 'JFROG_ARTIFACTROY', usernameVariable: 'ARTIFACTORY_USERNAME', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
+                     rtMavenRun (
+                         tool: 'MVN_3.8.4',
+                         pom: 'pom.xml',
+                         goals: 'clean install',
+                         deployerId: 'MAVEN_DEPLOYER'
+                     )
+                 }
             }
         }
         stage ('Publish build info') {
@@ -79,9 +80,9 @@ pipeline {
     }
     post {
         always {
-            mail from: "abbaigarimanavadu77@gmail.com",
+            mailfrom: "abbaigarimanavadu77@gmail.com",
                 to: "nagarajucivil011@gmail.com",
-                subject: "status of the project : ${currentBuild.fullDisplayName}",
+                subject: "status of the pipeline : ${currentBuild.fullDisplayName}",
                 body: "${env.BUILD_URL} has the result ${currentBuild.result}"
         }
     }
