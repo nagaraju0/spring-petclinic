@@ -25,13 +25,12 @@ pipeline {
         }
         stage('Archive') {
             steps {
-                // archiving artifacts
-                archive 'target/*.jar'
+                archiveArtifacts artifacts: 'target/*.jar', followSymlinks: false
             }
         }
         stage('Publish Test Results') {
             steps {
-                junit '**/TEST-*.xml'
+                junit 'target/surefire-reports/*.xml'
             }
         }
         stage("build & SonarQube analysis") {
